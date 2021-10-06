@@ -15,27 +15,25 @@ import { createTheme, ThemeProvider } from '@material-ui/core/styles';
 import { Autocomplete, Pagination, TextField } from '@material-ui/core';
 import FavoriteBorderIcon from '@material-ui/icons/FavoriteBorder';
 import { AppStateType } from '../redux/store';
-import { getMoviesList } from '../redux/appReducer';
-import MovieModal from './MovieModal'
+import { getMoviesList, setCurrentPage } from '../redux/appReducer';
+import MovieModal from './MovieModal';
+import { paginate } from './paginator'
 
 
 const theme = createTheme();
 
 const App = () => {
 
-  const paginate = (array: any, index: any, size: any) => {
-    index = Math.abs(parseInt(index));
-    index = index > 0 ? index - 1 : index;
-    size = parseInt(size);
-    size = size < 1 ? 1 : size;
-    return [...(array.filter((value: any, n: any) => {
-        return (n >= (index * size)) && (n < ((index+1) * size))
-    }))]
-}
   const [isModal, setIsModal] = useState<boolean>(false)
   const dispatch = useDispatch()
   const storeMovies: any = useSelector< AppStateType>((state) => {
     return state.appState.moviesList
+  })
+  const currentPage: any = useSelector<AppStateType> ((state) => {
+    return state.appState.currentPage
+  })
+  const pageSize: any = useSelector<AppStateType> ((state) => {
+    return state.appState.pageSize
   })
   if (!storeMovies.length) {
     dispatch(getMoviesList())
@@ -44,8 +42,8 @@ const App = () => {
   const [choosedMovie, setChoosedMovie] = useState<any>({})
 
   useEffect(() => {
-    setRenderedItems(paginate(storeMovies, 1, 18))
-  }, [storeMovies])
+    setRenderedItems(paginate(storeMovies, currentPage, pageSize))
+  }, [storeMovies, currentPage, pageSize])
   
 
   const chooseMovieClick = (e: any) => {
@@ -62,7 +60,7 @@ const App = () => {
   }
 
 const paginatorChange = (e: any, page: any) => {
-  setRenderedItems(paginate(storeMovies, page, 18)) 
+  dispatch(setCurrentPage(page)) 
 }
   return (
     <ThemeProvider theme={theme}>
@@ -110,7 +108,7 @@ const paginatorChange = (e: any, page: any) => {
   renderInput={(params) => <TextField {...params} label="Movie" />}
   onChange={inputChange}
 />
-<Pagination count={Math.ceil(storeMovies.length / 18)} sx={{display: 'flex', justifyContent: 'center',  marginTop: '50px'}} onChange={paginatorChange}/>
+<Pagination count={Math.ceil(storeMovies.length / 18)} sx={{display: 'flex', justifyContent: 'center',  marginTop: '50px'}} page={currentPage} onChange={paginatorChange}/>
 
 {!isModal? null: <MovieModal choosedMovie={choosedMovie} setIsModal={setIsModal}/>}
         </Box>
@@ -141,7 +139,7 @@ const paginatorChange = (e: any, page: any) => {
 
       {/* Footer */}
       <Box sx={{ bgcolor: 'background.paper', p: 6 }} component="footer">
-      <Pagination count={Math.ceil(storeMovies.length / 18)} sx={{display: 'flex', justifyContent: 'center'}} onChange={paginatorChange}/>
+      <Pagination count={Math.ceil(storeMovies.length / 18)} sx={{display: 'flex', justifyContent: 'center'}} page={currentPage} onChange={paginatorChange}/>
       <br />
         <Typography variant="h6" align="center" gutterBottom>
           TVmaze API app
