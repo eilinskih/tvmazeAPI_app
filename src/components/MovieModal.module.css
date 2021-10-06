@@ -1,0 +1,28 @@
+.modalWrapper {
+    padding: 5px;
+    background-color: lightgrey;
+    width: 30%;
+    height: 50%;
+    border-radius: 15px;
+    position: fixed;
+    left: 35%;
+    top: 30%;
+    z-index: 10;
+    display: flex;
+}
+
+.picture {
+    width: 50%;
+    border-radius: 15px;
+    background-repeat: no-repeat;
+    background-size: cover;
+
+}
+
+.descriptions {
+    padding: 5px;
+    width: 50%;
+    overflow-y: scroll;
+}
+
+
