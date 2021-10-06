@@ -12,10 +12,11 @@ import Toolbar from '@material-ui/core/Toolbar';
 import Typography from '@material-ui/core/Typography';
 import Container from '@material-ui/core/Container';
 import { createTheme, ThemeProvider } from '@material-ui/core/styles';
-import { Autocomplete, Pagination, TextField } from '@material-ui/core';
+import { Autocomplete, FormControl, InputLabel, MenuItem, Pagination, Select, TextField } from '@material-ui/core';
 import FavoriteBorderIcon from '@material-ui/icons/FavoriteBorder';
+import FavoriteIcon from '@material-ui/icons/Favorite';
 import { AppStateType } from '../redux/store';
-import { getMoviesList, setCurrentPage } from '../redux/appReducer';
+import { getMoviesList, setCurrentPage, setGenre, setLang, setMoviesList } from '../redux/appReducer';
 import MovieModal from './MovieModal';
 import { paginate } from './paginator'
 
@@ -23,8 +24,7 @@ import { paginate } from './paginator'
 const theme = createTheme();
 
 const App = () => {
-
-  const [isModal, setIsModal] = useState<boolean>(false)
+  
   const dispatch = useDispatch()
   const storeMovies: any = useSelector< AppStateType>((state) => {
     return state.appState.moviesList
@@ -32,19 +32,25 @@ const App = () => {
   const currentPage: any = useSelector<AppStateType> ((state) => {
     return state.appState.currentPage
   })
+  const sorts: any = useSelector<AppStateType> ((state) => {
+    return state.appState.sorts
+  })
   const pageSize: any = useSelector<AppStateType> ((state) => {
     return state.appState.pageSize
   })
+
   if (!storeMovies.length) {
     dispatch(getMoviesList())
   }
+   
+
   const [renderedItems, setRenderedItems] = useState<any>([])
+  const [isModal, setIsModal] = useState<boolean>(false)
   const [choosedMovie, setChoosedMovie] = useState<any>({})
 
   useEffect(() => {
     setRenderedItems(paginate(storeMovies, currentPage, pageSize))
   }, [storeMovies, currentPage, pageSize])
-  
 
   const chooseMovieClick = (e: any) => {
     setIsModal(true)
@@ -59,8 +65,46 @@ const App = () => {
     }
   }
 
+  const onFavouriteClick = (e: any) => {
+    const upd = storeMovies.map((item: any) => {
+      if (item.id === Number(e.target.id)) {
+      item.isFavourite = true
+      }
+      return item
+    })
+    // console.log(upd)
+    dispatch(setMoviesList(upd))
+  }
+
+  const onUnFavouriteClick = (e: any) => {
+    const upd = storeMovies.map((item: any) => {
+      if (item.id === Number(e.target.closest('svg').id)) {
+      item.isFavourite = false
+      }
+      return item
+    })
+    // console.log(e.target.closest('svg'))
+    dispatch(setMoviesList(upd))
+  }
+
 const paginatorChange = (e: any, page: any) => {
   dispatch(setCurrentPage(page)) 
+}
+
+const showFavouriteList = () => {
+  dispatch(setMoviesList(storeMovies.filter((item: any) => item.isFavourite === true)))
+}
+
+const showFilms = () => {
+  dispatch(getMoviesList())
+}
+
+const genreChange = (e: any) => {
+  dispatch(setGenre(e.target.value))
+}
+
+const langChange = (e: any) => {
+  dispatch(setLang(e.target.value))
 }
   return (
     <ThemeProvider theme={theme}>
@@ -74,12 +118,12 @@ const paginatorChange = (e: any, page: any) => {
           </Typography>
           </Grid>
           <Grid item xs={12} sm={12} md={1} >
-          <Typography sx={{ cursor: 'pointer', textAlign: 'center'}} className="films" variant="h6" color="inherit" >
+          <Typography onClick={showFilms} sx={{ cursor: 'pointer', textAlign: 'center'}} className="films" variant="h6" color="inherit" >
             Films
           </Typography>
           </Grid>
           <Grid item xs={12} sm={12} md={1} >
-          <Typography sx={{ cursor: 'pointer', textAlign: 'center'}} className="favourite" variant="h6" color="inherit" >
+          <Typography onClick={showFavouriteList} sx={{ cursor: 'pointer', textAlign: 'center'}} className="favourite" variant="h6" color="inherit" >
             Favourite
           </Typography>
           </Grid>
@@ -108,7 +152,45 @@ const paginatorChange = (e: any, page: any) => {
   renderInput={(params) => <TextField {...params} label="Movie" />}
   onChange={inputChange}
 />
-<Pagination count={Math.ceil(storeMovies.length / 18)} sx={{display: 'flex', justifyContent: 'center',  marginTop: '50px'}} page={currentPage} onChange={paginatorChange}/>
+<br />
+<FormControl sx={{ m: 1, minWidth: 80, marginLeft: '20%' }} >
+  <InputLabel id="demo-simple-select-label">Genre</InputLabel>
+  <Select
+    labelId="demo-simple-select-label"
+    id="demo-simple-select"
+    value={sorts.genre}
+    label="Genre"
+    onChange={genreChange}
+  >
+    <MenuItem value={"Action"}>Action </MenuItem>
+    <MenuItem value={"Crime"}>Crime </MenuItem>
+    <MenuItem value={"Romance"}>Romance</MenuItem>
+    <MenuItem value={"Drama"}>Drama</MenuItem>
+    <MenuItem value={"Horror"}>Horror </MenuItem>
+    <MenuItem value={"Science"}>Science</MenuItem>
+    <MenuItem value={"Thriller"}>Thriller</MenuItem>
+    <MenuItem value={"Adventure"}>Adventure </MenuItem>
+    <MenuItem value={"Mystery"}>Mystery</MenuItem>
+
+  </Select>
+</FormControl>
+
+<FormControl sx={{ m: 1, minWidth: 80 }} >
+  <InputLabel id="demo-simple-select-label1">Lang</InputLabel>
+  <Select
+    labelId="demo-simple-select-label1"
+    id="demo-simple-select1"
+    value={sorts.lang}
+    label="Lang"
+    onChange={langChange}
+  >
+    <MenuItem value={"English"}>English</MenuItem>
+  </Select>
+</FormControl>
+
+
+
+<Pagination count={Math.ceil(storeMovies.length / pageSize)} sx={{display: 'flex', justifyContent: 'center',  marginTop: '50px'}} page={currentPage} onChange={paginatorChange}/>
 
 {!isModal? null: <MovieModal choosedMovie={choosedMovie} setIsModal={setIsModal}/>}
         </Box>
@@ -128,7 +210,9 @@ const paginatorChange = (e: any, page: any) => {
                     onClick={chooseMovieClick}
                   />
                   <CardContent sx={{ flexGrow: 1 }}>
-                  <FavoriteBorderIcon sx={{ cursor: 'pointer'}} />
+                  {movie.isFavourite?
+                  <FavoriteIcon id={movie.id} onClick={onUnFavouriteClick} sx={{ cursor: 'pointer'}}/>:
+                  <FavoriteBorderIcon id={movie.id} onClick={onFavouriteClick} sx={{ cursor: 'pointer'}}/>}
                   </CardContent>
                 </Card>
               </Grid>
