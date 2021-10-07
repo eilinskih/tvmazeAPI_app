@@ -1,4 +1,4 @@
-import React, { useEffect, useState } from 'react';
+import React, { useEffect, useState, MouseEvent } from 'react';
 import { useDispatch, useSelector } from 'react-redux';
 
 import AppBar from '@material-ui/core/AppBar';
@@ -12,98 +12,90 @@ import Toolbar from '@material-ui/core/Toolbar';
 import Typography from '@material-ui/core/Typography';
 import Container from '@material-ui/core/Container';
 import { createTheme, ThemeProvider } from '@material-ui/core/styles';
-import { Autocomplete, FormControl, InputLabel, MenuItem, Pagination, Select, TextField } from '@material-ui/core';
+import { Autocomplete, FormControl, InputLabel, MenuItem, Pagination, Select, SelectChangeEvent, TextField } from '@material-ui/core';
 import FavoriteBorderIcon from '@material-ui/icons/FavoriteBorder';
 import FavoriteIcon from '@material-ui/icons/Favorite';
-import { AppStateType } from '../redux/store';
+import { AppDispatch, AppStateType } from '../redux/store';
 import { getMoviesList, setCurrentPage, setGenre, setLang, setMoviesList } from '../redux/appReducer';
 import MovieModal from './MovieModal';
 import { paginate } from './paginator'
-
+import { IMovieItem } from './tsInterfaces';
+import {IInitialState} from './../redux/appReducer'
 
 const theme = createTheme();
 
-const App = () => {
+const App: React.FC = () => {
   
-  const dispatch = useDispatch()
-  const storeMovies: any = useSelector< AppStateType>((state) => {
-    return state.appState.moviesList
-  })
-  const currentPage: any = useSelector<AppStateType> ((state) => {
-    return state.appState.currentPage
-  })
-  const sorts: any = useSelector<AppStateType> ((state) => {
-    return state.appState.sorts
-  })
-  const pageSize: any = useSelector<AppStateType> ((state) => {
-    return state.appState.pageSize
-  })
+  const dispatch: AppDispatch = useDispatch()
+  const appState = useSelector<AppStateType, IInitialState>((state) => {
+    return state.appState
+  });
 
-  if (!storeMovies.length) {
-    dispatch(getMoviesList())
-  }
-   
-
-  const [renderedItems, setRenderedItems] = useState<any>([])
+  const [renderedItems, setRenderedItems] = useState<IMovieItem[]>([])
   const [isModal, setIsModal] = useState<boolean>(false)
-  const [choosedMovie, setChoosedMovie] = useState<any>({})
+  const [choosedMovie, setChoosedMovie] = useState<IMovieItem>(appState.moviesList[0])
 
   useEffect(() => {
-    setRenderedItems(paginate(storeMovies, currentPage, pageSize))
-  }, [storeMovies, currentPage, pageSize])
+      if (!appState.moviesList.length) {
+    dispatch(getMoviesList())
+  }
+  },[dispatch, appState.moviesList])
 
-  const chooseMovieClick = (e: any) => {
+  useEffect(() => {
+    setRenderedItems(paginate(appState.moviesList, appState.currentPage, appState.pageSize))
+  }, [appState.moviesList, appState.currentPage, appState.pageSize])
+ 
+  const chooseMovieClick = (e: MouseEvent<HTMLElement>) => {
+    console.log(e.target)
     setIsModal(true)
-    setChoosedMovie(storeMovies.find((item: any) => item.id === Number(e.target.id)))
+    setChoosedMovie(appState.moviesList.filter((item): boolean => item.id === Number((e.target as any).id))[0])
   }
 
-  const inputChange = (event: any, value: any) => {
+  const inputChange = (event: React.SyntheticEvent, value: IMovieItem | null) => {
     event.preventDefault()
     if (value) {
-      setChoosedMovie(storeMovies.find((item: any) => item.id === value.id))
+      setChoosedMovie(appState.moviesList.filter((item): boolean => item.id === value.id)[0])
       setIsModal(true)
     }
   }
-
-  const onFavouriteClick = (e: any) => {
-    const upd = storeMovies.map((item: any) => {
-      if (item.id === Number(e.target.id)) {
+  const onFavouriteClick = (e: React.SyntheticEvent) => {
+    const target = e.target as typeof e.target & {id: string}
+    const upd = appState.moviesList.map((item): IMovieItem => {
+      if (item.id === Number(target.id)) {
       item.isFavourite = true
       }
       return item
     })
-    // console.log(upd)
     dispatch(setMoviesList(upd))
   }
 
   const onUnFavouriteClick = (e: any) => {
-    const upd = storeMovies.map((item: any) => {
+    const upd = appState.moviesList.map((item) => {
       if (item.id === Number(e.target.closest('svg').id)) {
       item.isFavourite = false
       }
       return item
     })
-    // console.log(e.target.closest('svg'))
     dispatch(setMoviesList(upd))
   }
 
-const paginatorChange = (e: any, page: any) => {
+const paginatorChange = (e: React.ChangeEvent<unknown>, page: number) => {
   dispatch(setCurrentPage(page)) 
 }
 
 const showFavouriteList = () => {
-  dispatch(setMoviesList(storeMovies.filter((item: any) => item.isFavourite === true)))
+  dispatch(setMoviesList(appState.moviesList.filter((item): boolean => item.isFavourite === true)))
 }
 
 const showFilms = () => {
   dispatch(getMoviesList())
 }
 
-const genreChange = (e: any) => {
+const genreChange = (e: SelectChangeEvent<string>): void => {
   dispatch(setGenre(e.target.value))
 }
 
-const langChange = (e: any) => {
+const langChange = (e: SelectChangeEvent<string>): void => {
   dispatch(setLang(e.target.value))
 }
   return (
@@ -146,8 +138,8 @@ const langChange = (e: any) => {
           <Autocomplete
   disablePortal
   id="combo-box-demo"
-  options={storeMovies}
-  getOptionLabel={(option: any) => `${option.id}:${option.name}`}
+  options={renderedItems}
+  getOptionLabel={(option: IMovieItem) => `${option.id}:${option.name}`}
   sx={{ width: '70%', margin: '0 auto' }}
   renderInput={(params) => <TextField {...params} label="Movie" />}
   onChange={inputChange}
@@ -158,7 +150,7 @@ const langChange = (e: any) => {
   <Select
     labelId="demo-simple-select-label"
     id="demo-simple-select"
-    value={sorts.genre}
+    value={appState.sorts.genre}
     label="Genre"
     onChange={genreChange}
   >
@@ -180,7 +172,7 @@ const langChange = (e: any) => {
   <Select
     labelId="demo-simple-select-label1"
     id="demo-simple-select1"
-    value={sorts.lang}
+    value={appState.sorts.lang}
     label="Lang"
     onChange={langChange}
   >
@@ -190,7 +182,7 @@ const langChange = (e: any) => {
 
 
 
-<Pagination count={Math.ceil(storeMovies.length / pageSize)} sx={{display: 'flex', justifyContent: 'center',  marginTop: '50px'}} page={currentPage} onChange={paginatorChange}/>
+<Pagination count={Math.ceil(appState.moviesList.length / appState.pageSize)} sx={{display: 'flex', justifyContent: 'center',  marginTop: '50px'}} page={appState.currentPage} onChange={paginatorChange}/>
 
 {!isModal? null: <MovieModal choosedMovie={choosedMovie} setIsModal={setIsModal}/>}
         </Box>
@@ -223,7 +215,7 @@ const langChange = (e: any) => {
 
       {/* Footer */}
       <Box sx={{ bgcolor: 'background.paper', p: 6 }} component="footer">
-      <Pagination count={Math.ceil(storeMovies.length / 18)} sx={{display: 'flex', justifyContent: 'center'}} page={currentPage} onChange={paginatorChange}/>
+      <Pagination count={Math.ceil(appState.moviesList.length / 18)} sx={{display: 'flex', justifyContent: 'center'}} page={appState.currentPage} onChange={paginatorChange}/>
       <br />
         <Typography variant="h6" align="center" gutterBottom>
           TVmaze API app
