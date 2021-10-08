@@ -29,22 +29,17 @@ const initialState: IInitialState = {
 const appReducer = (state = initialState, action: ActionsType): IInitialState => {
     switch (action.type) {
         case SET_MOVIES_LIST:
-            console.log(action);
-            return (
-                {
+            return {
                 ...state,
                 moviesList: [...action.list],
                 portionList: paginate(action.list, state.currentPage, state.pageSize)
-                }
-            )
+            }
         case SET_CURRENT_PAGE:
-            return (
-                {
+            return {
                 ...state,
                 currentPage: action.page,
                 portionList: paginate(state.moviesList, action.page, state.pageSize)
-                }
-            )
+            }
         case SET_GENRE:
             const filteredGenre = state.moviesList.filter((item): boolean => {
                 return (
@@ -56,26 +51,26 @@ const appReducer = (state = initialState, action: ActionsType): IInitialState =>
                 moviesList: filteredGenre,
                 portionList: paginate(state.moviesList, state.currentPage, state.pageSize),
                 sorts: { ...state.sorts, genre: action.genre }
-                }
+            }
         case SET_LANG:
             const filteredLang = state.moviesList.filter((item): boolean => {
                 return (
                     item.language === action.lang
                 )
             })
-                if (!filteredLang) {
-                    return {
-                        ...state,
-                        moviesList: [],
-                        sorts: { ...state.sorts, lang: action.lang }
-                    }
-                }
-            return {
+            if (!filteredLang) {
+                return {
                     ...state,
-                    moviesList: filteredLang,
-                    portionList: paginate(state.moviesList, state.currentPage, state.pageSize),
+                    moviesList: [],
                     sorts: { ...state.sorts, lang: action.lang }
                 }
+            }
+            return {
+                ...state,
+                moviesList: filteredLang,
+                portionList: paginate(state.moviesList, state.currentPage, state.pageSize),
+                sorts: { ...state.sorts, lang: action.lang }
+            }
         default: return state;
     };
 };

@@ -27,15 +27,15 @@ const App: React.FC = () => {
   
   const { moviesList, portionList, currentPage, pageSize, sorts } = useSelector<AppStateType, IInitialState>(({ appState: { moviesList, portionList, currentPage, pageSize, sorts } }) => {
     return {
-    moviesList,
-    portionList,
-    currentPage,
-    pageSize,
-    sorts
-    }
+      moviesList,
+      portionList,
+      currentPage,
+      pageSize,
+      sorts
+    };
     });
     
-  const dispatch: AppDispatch = useDispatch()  
+  const dispatch: AppDispatch = useDispatch();  
   const [isModal, setIsModal] = useState<boolean>(false);
   const [choosedMovie, setChoosedMovie] = useState<IMovieItem>(moviesList[0]);
 
@@ -82,7 +82,7 @@ const App: React.FC = () => {
   };
 
   const showFavouriteList = () => {
-    dispatch(setMoviesList(moviesList.filter((item): boolean => item.isFavourite === true)))
+    dispatch(setMoviesList(moviesList.filter((item): boolean => item.isFavourite)))
   };
 
   const showFilms = () => {
