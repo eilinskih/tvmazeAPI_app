@@ -41,9 +41,9 @@ export interface IMovieItem {
         self: {href: string},
         previousepisode: {href: string}
     }
-}
+};
 
 export interface ISorts {
     genre: string,
     lang: string
-}
+};
