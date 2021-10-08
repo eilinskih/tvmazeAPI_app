@@ -25,13 +25,19 @@ const theme = createTheme();
 
 const App: React.FC = () => {
   
-  const dispatch: AppDispatch = useDispatch()
-  const appState = useSelector<AppStateType, IInitialState>((state) => {
-    return state.appState
-  });
-
+  const { moviesList, portionList, currentPage, pageSize, sorts } = useSelector<AppStateType, IInitialState>(({ appState: { moviesList, portionList, currentPage, pageSize, sorts } }) => {
+    return {
+    moviesList,
+    portionList,
+    currentPage,
+    pageSize,
+    sorts
+    }
+    });
+    
+  const dispatch: AppDispatch = useDispatch()  
   const [isModal, setIsModal] = useState<boolean>(false);
-  const [choosedMovie, setChoosedMovie] = useState<IMovieItem>(appState.moviesList[0]);
+  const [choosedMovie, setChoosedMovie] = useState<IMovieItem>(moviesList[0]);
 
   useEffect(() => {
     dispatch(getMoviesList())
@@ -39,20 +45,20 @@ const App: React.FC = () => {
  
   const chooseMovieClick = (e: MouseEvent<HTMLElement>) => {
     setIsModal(true)
-    setChoosedMovie(appState.moviesList.filter((item): boolean => item.id === Number((e.target as any).id))[0])
+    setChoosedMovie(moviesList.filter((item): boolean => item.id === Number((e.target as any).id))[0])
   };
 
   const inputChange = (event: React.SyntheticEvent, value: IMovieItem | null) => {
     event.preventDefault()
     if (value) {
-      setChoosedMovie(appState.moviesList.filter((item): boolean => item.id === value.id)[0])
+      setChoosedMovie(moviesList.filter((item): boolean => item.id === value.id)[0])
       setIsModal(true)
     }
   };
 
   const onFavouriteClick = (e: React.SyntheticEvent) => {
     const target = e.target as typeof e.target & {id: string}
-    const upd = appState.moviesList.map((item): IMovieItem => {
+    const upd = moviesList.map((item): IMovieItem => {
       if (item.id === Number(target.id)) {
         item.isFavourite = true
       }
@@ -62,7 +68,7 @@ const App: React.FC = () => {
   };
 
   const onUnFavouriteClick = (e: any) => {
-    const upd = appState.moviesList.map((item) => {
+    const upd = moviesList.map((item) => {
       if (item.id === Number(e.target.closest('svg').id)) {
         item.isFavourite = false
       }
@@ -76,7 +82,7 @@ const App: React.FC = () => {
   };
 
   const showFavouriteList = () => {
-    dispatch(setMoviesList(appState.moviesList.filter((item): boolean => item.isFavourite === true)))
+    dispatch(setMoviesList(moviesList.filter((item): boolean => item.isFavourite === true)))
   };
 
   const showFilms = () => {
@@ -131,7 +137,7 @@ const App: React.FC = () => {
           <Autocomplete
             disablePortal
             id="combo-box-demo"
-            options={appState.moviesList}
+            options={moviesList}
             getOptionLabel={(option: IMovieItem) => `${option.id}:${option.name}`}
             sx={{ width: '70%', margin: '0 auto' }}
             renderInput={(params) => <TextField {...params} label="Movie" />}
@@ -143,7 +149,7 @@ const App: React.FC = () => {
             <Select
               labelId="demo-simple-select-label"
               id="demo-simple-select"
-              value={appState.sorts.genre}
+              value={sorts.genre}
               label="Genre"
               onChange={genreChange}
             >
@@ -163,21 +169,21 @@ const App: React.FC = () => {
             <Select
               labelId="demo-simple-select-label1"
               id="demo-simple-select1"
-              value={appState.sorts.lang}
+              value={sorts.lang}
               label="Lang"
               onChange={langChange}
             >
               <MenuItem value={"English"}>English</MenuItem>
             </Select>
           </FormControl>
-          <Pagination count={Math.ceil(appState.moviesList.length / appState.pageSize)} 
+          <Pagination count={Math.ceil(moviesList.length / pageSize)} 
           sx={{ display: 'flex', justifyContent: 'center', marginTop: '50px' }}
-          page={appState.currentPage} onChange={paginatorChange} />
+          page={currentPage} onChange={paginatorChange} />
           {!isModal ? null : <MovieModal choosedMovie={choosedMovie} setIsModal={setIsModal} />}
         </Box>
         <Container sx={{ py: 8 }} maxWidth="md">
           <Grid container spacing={6}>
-            {appState.portionList.map((movie: any) => (
+            {portionList.map((movie: any) => (
               <Grid item key={movie.id} xs={12} sm={6} md={4}>
                 <Card sx={{ height: '100%', display: 'flex', flexDirection: 'column' }}>
                   <CardMedia
@@ -200,9 +206,9 @@ const App: React.FC = () => {
         </Container>
       </main>
       <Box sx={{ bgcolor: 'background.paper', p: 6 }} component="footer">
-        <Pagination count={Math.ceil(appState.moviesList.length / 18)}
+        <Pagination count={Math.ceil(moviesList.length / 18)}
         sx={{ display: 'flex', justifyContent: 'center' }}
-        page={appState.currentPage}
+        page={currentPage}
         onChange={paginatorChange} />
         <br />
         <Typography variant="h6" align="center" gutterBottom>
